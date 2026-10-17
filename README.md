@@ -45,7 +45,7 @@ Everything runs on self-hosted open-weights models serving from AMD Instinct MI3
 | 2 | AMD hardware + BYOM inference | `Qwen2.5-14B-Instruct` (text) and `FLUX.1-schnell` (visuals), both self-hosted on AMD Instinct MI300X via vLLM and ROCm | [AMD Hardware & BYOM](#amd-hardware--byom-integration-requirement-2) |
 | 3 | Use of Evolus building blocks | Pipeline authoring, prompt iteration, and lore / character-card structuring were composed in the Evolus Event Workspace; the deployment keeps workspace credentials as configuration hooks | [Evolus Platform Integration](#evolus-platform--api-integration-requirements-1-3--4) |
 | 4 | API connectivity | Runtime traffic uses the GitHub REST API, the OpenAI-compatible vLLM chat endpoint, and the FLUX `POST /generate-image` API, unified behind a FastAPI service layer; the frontend consumes one REST contract | [Evolus Platform Integration](#evolus-platform--api-integration-requirements-1-3--4) / [Architecture](#system-architecture) |
-| 5 | Containerized, judge-ready setup | One command launch: `docker compose up --build`, with a fully optional `.env` and an offline demo mode (`/saga/mock`) | [Quickstart](#quickstart--judge-setup-requirement-5) |
+| 5 | Containerized, judge-ready setup | One command launch: `docker compose up --build`, with a fully optional `.env` and a built-in demo mode (`/saga/mock`) | [Quickstart](#quickstart--judge-setup-requirement-5) |
 
 ## The Game Loop
 
