@@ -24,9 +24,11 @@ from pydantic import BaseModel, Field
 from backend.services.image_service import (
     DEFAULT_STEPS,
     MAX_STEPS,
+    ImageQueueSaturated,
     ImageServiceError,
     generate_image,
     image_media_type,
+    image_server_status,
     images_enabled,
     server_fingerprint,
 )
@@ -77,8 +79,25 @@ async def _serve(
         data = await generate_image(
             prompt, seed=seed, width=width, height=height, steps=steps
         )
+    except ImageQueueSaturated as exc:
+        # Temporary overload, not an upstream failure: 503 + Retry-After.
+        logger.warning("Image proxy queue saturated: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc),
+            headers={"Retry-After": "5"},
+        ) from exc
     except ImageServiceError as exc:
         logger.warning("Image proxy failed: %s", exc)
+        status = image_server_status()
+        if status["circuit_open"]:
+            # 503 + Retry-After tells the browser the GPU box is down rather
+            # than making it wait through the full generation timeout.
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc),
+                headers={"Retry-After": str(max(1, int(status["retry_in_seconds"])))},
+            ) from exc
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     media_type = image_media_type(data)

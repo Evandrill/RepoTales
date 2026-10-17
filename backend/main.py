@@ -14,6 +14,7 @@ import os
 
 import backend  # noqa: F401  — loads backend/.env as an import side effect
 from backend.routers import image, saga
+from backend.services.image_service import image_server_status
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -68,7 +69,7 @@ async def health() -> dict[str, object]:
             or os.getenv("VLLM_MODEL")
             or "meta-llama/Meta-Llama-3.1-8B-Instruct"
         ),
-        "github_token_configured": bool(os.getenv("GITHUB_TOKEN")),
+        "github_token_configured": bool((os.getenv("GITHUB_TOKEN") or "").strip()),
         "llm_fallback_enabled": os.getenv("AMD_LLM_ALLOW_FALLBACK", "true").lower()
         in {"1", "true", "yes", "on"},
         "image_server_url": (
@@ -78,5 +79,6 @@ async def health() -> dict[str, object]:
         ),
         "images_enabled": os.getenv("AMD_IMAGE_ENABLED", "true").lower()
         in {"1", "true", "yes", "on"},
+        **image_server_status(),
         "evolus_workspace_configured": bool(os.getenv("EVOLUS_WORKSPACE_ID")),
     }

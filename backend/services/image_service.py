@@ -28,7 +28,9 @@ import hashlib
 import logging
 import os
 import re
+import time
 from collections import OrderedDict
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, quote, urlencode, urlparse
@@ -76,12 +78,28 @@ class ImageServiceError(RuntimeError):
     """Raised when the FLUX server cannot be reached or returns non-image data."""
 
 
+class ImageServerUnreachable(ImageServiceError):
+    """The FLUX host is down (connection refused / connect timeout).
+
+    Distinct from a slow generation: retrying a dead TCP endpoint only makes
+    the browser wait longer, so this trips the circuit breaker immediately.
+    """
+
+
 class TransientImageError(ImageServiceError):
     """A failure a single retry can plausibly fix (5xx, timeout, dropped link).
 
     Permanent failures (400/401/404/422, invalid prompt) inherit from
     `ImageServiceError` only, so the retry in `_generate_and_cache` never
     doubles the load for something that will fail identically a second time.
+    """
+
+
+class ImageQueueSaturated(ImageServiceError):
+    """The single FLUX slot stayed busy past `AMD_IMAGE_QUEUE_TIMEOUT`.
+
+    Kept distinct so the proxy can answer 503 (temporary overload) instead of
+    502 (upstream failure), with a `Retry-After` hint.
     """
 
 
@@ -117,6 +135,92 @@ def images_enabled() -> bool:
 def _step_count() -> int:
     """Configured FLUX steps, clamped to the schnell sweet spot (1-3)."""
     return max(1, min(MAX_STEPS, _env_int("AMD_IMAGE_STEPS", DEFAULT_STEPS)))
+
+
+# --------------------------------------------------------------------------- #
+# Failure handling: connect timeout, queue timeout, circuit breaker            #
+# --------------------------------------------------------------------------- #
+# A dead FLUX host used to cost `connect timeout x retries` for *every* queued
+# panel. With a 120 s read timeout and one GPU slot, the UI could sit on
+# DECODING FLUX for minutes. These bounds make a down server fail fast instead.
+_CONNECT_TIMEOUT = _env_float("AMD_IMAGE_CONNECT_TIMEOUT", 4.0)
+_QUEUE_TIMEOUT = _env_float("AMD_IMAGE_QUEUE_TIMEOUT", 30.0)
+_CIRCUIT_THRESHOLD = max(1, _env_int("AMD_IMAGE_CIRCUIT_THRESHOLD", 2))
+_CIRCUIT_COOLDOWN = _env_float("AMD_IMAGE_CIRCUIT_COOLDOWN", 30.0)
+
+_CIRCUIT_FAILURES = 0
+_CIRCUIT_OPEN_UNTIL = 0.0
+
+
+def _circuit_is_open() -> bool:
+    return time.monotonic() < _CIRCUIT_OPEN_UNTIL
+
+
+def image_server_status() -> dict[str, object]:
+    """Diagnostics exposed by `/health` (no network call)."""
+    remaining = max(0.0, _CIRCUIT_OPEN_UNTIL - time.monotonic())
+    return {
+        "circuit_open": remaining > 0,
+        "consecutive_failures": _CIRCUIT_FAILURES,
+        "retry_in_seconds": round(remaining, 1),
+    }
+
+
+def _circuit_error() -> ImageServiceError:
+    status = image_server_status()
+    return ImageServiceError(
+        "Serveur FLUX injoignable ; disjoncteur ouvert "
+        f"(reprise dans {status['retry_in_seconds']:.0f} s). "
+        "Verifiez AMD_IMAGE_SERVER_URL / FLUX_BASE_URL et que le serveur "
+        "d'images AMD est demarre."
+    )
+
+
+def _record_upstream_success() -> None:
+    global _CIRCUIT_FAILURES, _CIRCUIT_OPEN_UNTIL
+    _CIRCUIT_FAILURES = 0
+    _CIRCUIT_OPEN_UNTIL = 0.0
+
+
+def _record_upstream_failure(reason: object, *, trip_now: bool = False) -> None:
+    """Count consecutive upstream failures and open the circuit."""
+    global _CIRCUIT_FAILURES, _CIRCUIT_OPEN_UNTIL
+    now = time.monotonic()
+    if _CIRCUIT_OPEN_UNTIL and now >= _CIRCUIT_OPEN_UNTIL:
+        # Cooldown elapsed: let the next request probe the server again.
+        _CIRCUIT_FAILURES = 0
+        _CIRCUIT_OPEN_UNTIL = 0.0
+    _CIRCUIT_FAILURES += 1
+    if trip_now or _CIRCUIT_FAILURES >= _CIRCUIT_THRESHOLD:
+        if not _CIRCUIT_OPEN_UNTIL:
+            _CIRCUIT_OPEN_UNTIL = now + _CIRCUIT_COOLDOWN
+            logger.warning(
+                "FLUX injoignable (%s) — disjoncteur ouvert %.0f s",
+                reason,
+                _CIRCUIT_COOLDOWN,
+            )
+
+
+@asynccontextmanager
+async def _gpu_slot():
+    """Acquire the single FLUX slot, but never wait for it forever.
+
+    Without this bound, a hung upstream call kept the semaphore for the full
+    read timeout while every other panel queued behind it; the browser showed a
+    loading skeleton with no end in sight.
+    """
+    sem = _semaphore()
+    try:
+        await asyncio.wait_for(sem.acquire(), timeout=_QUEUE_TIMEOUT)
+    except asyncio.TimeoutError as exc:
+        raise ImageQueueSaturated(
+            "File d'attente FLUX saturee "
+            f"(>{_QUEUE_TIMEOUT:.0f} s). Le serveur d'images ne repond pas."
+        ) from exc
+    try:
+        yield
+    finally:
+        sem.release()
 
 
 # --------------------------------------------------------------------------- #
@@ -705,7 +809,9 @@ async def _fetch_upstream(
             step_fields.append(candidate)
 
     method = (os.getenv("AMD_IMAGE_HTTP_METHOD") or "POST").strip().upper()
-    timeout = httpx.Timeout(_env_float("AMD_IMAGE_TIMEOUT", DEFAULT_TIMEOUT), connect=10.0)
+    timeout = httpx.Timeout(
+        _env_float("AMD_IMAGE_TIMEOUT", DEFAULT_TIMEOUT), connect=_CONNECT_TIMEOUT
+    )
     headers = {"Accept": "image/png, image/jpeg, application/json"}
 
     try:
@@ -749,6 +855,13 @@ async def _fetch_upstream(
                     f"FLUX a renvoye HTTP {resp.status_code}: {detail}"
                 )
             return await _decode_response(resp)
+    except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+        # The host is down or unreachable: a retry cannot succeed. This trips
+        # the circuit immediately instead of paying the timeout for every
+        # queued panel.
+        raise ImageServerUnreachable(
+            f"Serveur d'images injoignable ({type(exc).__name__}: {exc})."
+        ) from exc
     except httpx.TimeoutException as exc:
         raise TransientImageError(
             f"FLUX n'a pas repondu dans le delai imparti "
@@ -761,6 +874,25 @@ async def _fetch_upstream(
         ) from exc
 
 
+async def _attempt_upstream(
+    prompt: str, *, seed: int, width: int, height: int, steps: int
+) -> bytes:
+    """One upstream call, recording the outcome for the circuit breaker."""
+    try:
+        data = await _fetch_upstream(
+            prompt, seed=seed, width=width, height=height, steps=steps
+        )
+    except ImageServerUnreachable as exc:
+        # Dead host: trip now, do not retry.
+        _record_upstream_failure(exc, trip_now=True)
+        raise
+    except TransientImageError as exc:
+        _record_upstream_failure(exc)
+        raise
+    _record_upstream_success()
+    return data
+
+
 async def _generate_and_cache(
     key: tuple[Any, ...],
     prompt: str,
@@ -771,19 +903,28 @@ async def _generate_and_cache(
     steps: int,
 ) -> bytes:
     """Disk cache lookup → bounded upstream call → both caches."""
+    # Cached artwork is always served, even while the GPU box is down.
     cached = await _read_disk_cache(key)
     if cached is not None:
         _memory_put(key, cached)
         return cached
 
+    if _circuit_is_open():
+        raise _circuit_error()
+
+    data: bytes | None = None
+
     # Bound GPU concurrency: the single MI300X must not be oversubscribed by a
-    # dozen roster + panel requests arriving at once.
-    async with _semaphore():
+    # dozen roster + panel requests arriving at once. `_gpu_slot` also bounds
+    # the *wait* for the slot, so a hung upstream cannot stall the whole queue.
+    async with _gpu_slot():
         # Another request may have filled the caches while we waited.
         cached = _memory_get(key) or await _read_disk_cache(key)
         if cached is not None:
             _memory_put(key, cached)
             return cached
+        if _circuit_is_open():
+            raise _circuit_error()
 
         logger.info(
             "FLUX generation seed=%d %dx%d steps=%d prompt=%r",
@@ -797,9 +938,14 @@ async def _generate_and_cache(
         # dropped connection. One short retry turns that into a slightly slower
         # image instead of a permanent placeholder.
         try:
-            data = await _fetch_upstream(
+            data = await _attempt_upstream(
                 prompt, seed=seed, width=width, height=height, steps=steps
             )
+        except ImageServerUnreachable:
+            # A dead host is not transient. Requests queued behind us hit the
+            # open circuit and fail immediately instead of paying the timeout
+            # one by one.
+            raise
         except TransientImageError:
             data = None
 
@@ -811,8 +957,12 @@ async def _generate_and_cache(
         if cached is not None:
             _memory_put(key, cached)
             return cached
-        async with _semaphore():
-            data = await _fetch_upstream(
+        if _circuit_is_open():
+            raise _circuit_error()
+        async with _gpu_slot():
+            if _circuit_is_open():
+                raise _circuit_error()
+            data = await _attempt_upstream(
                 prompt, seed=seed, width=width, height=height, steps=steps
             )
 

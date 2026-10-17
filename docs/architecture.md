@@ -27,7 +27,7 @@ flowchart TD
 | Backend API | Routes, validation, background tasks, health/config report | `backend/main.py`, `backend/routers/saga.py`, `backend/routers/image.py` |
 | GitHub ingestion | Public repo parsing, commit list, per-commit stats, bot filtering, rate-limit handling | `backend/services/github_service.py` |
 | Narrative engine | Qwen 2.5 prompting (FR/EN), JSON repair, validated fallback saga | `backend/services/amd_service.py` |
-| Visual engine | FLUX.1-schnell calls, SHA-256 seeds, disk/memory cache, retry policy, pre-generation tiers | `backend/services/image_service.py` |
+| Visual engine | FLUX.1-schnell calls, SHA-256 seeds, disk/memory cache, retry policy, circuit breaker, pre-generation tiers | `backend/services/image_service.py` |
 | Frontend | Four game screens, view-model normalization, i18n, Web Audio chiptune | `frontend/src/` |
 | Container stack | Backend on 8080, Nginx-served frontend on 5173, `/api` reverse proxy | `docker-compose.yml`, `frontend/nginx.conf` |
 
@@ -51,8 +51,14 @@ Combat is client-side in `BossEventModal.jsx`. Boss HP is derived as `5000 + 100
 | `VLLM_BASE_URL` / `AMD_LLM_BASE_URL` | Backend | OpenAI-compatible vLLM base URL |
 | `VLLM_MODEL` / `AMD_MODEL_NAME` | Backend | Served model identifier |
 | `FLUX_BASE_URL` / `AMD_IMAGE_SERVER_URL` | Backend | FLUX server base URL (a bare host gets `/generate-image`) |
-| `AMD_IMAGE_TIMEOUT` | Backend | Per-image upstream timeout (seconds) |
-| `GITHUB_TOKEN` | Backend | Optional; raises GitHub REST rate limits |
+| `AMD_IMAGE_TIMEOUT` | Backend | Per-image upstream read timeout (seconds) |
+| `AMD_IMAGE_CONNECT_TIMEOUT` | Backend | TCP connect timeout; short so a dead FLUX host fails fast (default 4 s) |
+| `AMD_IMAGE_QUEUE_TIMEOUT` | Backend | Max wait for the single FLUX slot before returning 503 (default 30 s) |
+| `AMD_IMAGE_CIRCUIT_THRESHOLD` / `AMD_IMAGE_CIRCUIT_COOLDOWN` | Backend | Consecutive transient failures (timeout / 5xx) before the circuit opens, and how long it stays open (default 2 / 30 s). A connection-level failure (host down) opens it immediately |
+| `GITHUB_TOKEN` | Backend | Optional; raises GitHub REST quota from 60 to 5 000 req/h |
+| `GITHUB_CACHE_TTL` | Backend | Reuse a repo's enriched commits for repeated generations (default 300 s) |
+| `GITHUB_STATS_TIMEOUT` | Backend | Deadline for the per-commit stats fan-out (default 12 s) |
+| `GITHUB_MAX_CONCURRENCY` | Backend | Parallel GitHub requests during stats enrichment (default 8) |
 | `EVOLUS_WORKSPACE_ID`, `EVOLUS_API_KEY` | Compose / health | Workspace configuration hooks |
 | `CORS_ORIGINS` | Backend | Comma-separated allowed origins (default `*`) |
 

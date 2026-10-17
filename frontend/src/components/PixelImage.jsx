@@ -8,15 +8,17 @@
  * avec `animate-slam`.
  *
  * Résilience : le proxy renvoie parfois un 500/502/503 transitoire (GPU qui
- * démarre, job concurrent, timeout). On retente donc jusqu'à 3 fois, à 1,5 s
+ * démarre, job concurrent, timeout). On retente donc jusqu'à 2 fois, à 0,8 s
  * d'intervalle, avec un paramètre anti-cache avant d'afficher « SIGNAL LOST ».
+ * Le backend coupe le disjoncteur quand le serveur FLUX est injoignable : les
+ * tentatives suivantes échouent alors immédiatement au lieu de bloquer l'UI.
  */
 import { useEffect, useRef, useState } from "react";
 import PixelIcon from "./PixelIcon.jsx";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1500;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 800;
 
 /** Ajoute `_retry=n` sans casser une query string déjà présente. */
 function withRetry(url, attempt) {

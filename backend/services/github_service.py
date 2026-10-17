@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import re
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -17,6 +19,14 @@ from tenacity import (
 )
 
 GITHUB_API = "https://api.github.com"
+
+logger = logging.getLogger(__name__)
+
+# Per-repo cache of enriched commits. GitHub quotas (60 req/h unauthenticated)
+# and the N+1 stats fan-out make repeat generations of the same repo slow;
+# `/saga/generate` is routinely called several times while judging.
+_COMMIT_CACHE: dict[tuple[str, str, int, bool], tuple[float, list["CommitInfo"]]] = {}
+_COMMIT_CACHE_MAX = 64
 
 # Accepts: https://github.com/owner/repo(.git)(/) and the usual deep links
 # people paste by accident (/tree/main, /blob/..., /commits, /issues...).
@@ -157,11 +167,28 @@ class GitHubService:
         token: str | None = None,
         *,
         timeout: float = 15.0,
-        max_concurrency: int = 6,
+        max_concurrency: int = 8,
     ) -> None:
-        self._token = token or os.getenv("GITHUB_TOKEN")
+        # Strip once: a whitespace-only value (easy copy/paste mistake) is
+        # falsy for `/health` but would otherwise be sent as a malformed
+        # `Authorization: Bearer` header and fail every request with 401.
+        self._token = (token or os.getenv("GITHUB_TOKEN") or "").strip() or None
         self._timeout = timeout
-        self._sem = asyncio.Semaphore(max_concurrency)
+        try:
+            self._max_concurrency = max(
+                1, int(os.getenv("GITHUB_MAX_CONCURRENCY", str(max_concurrency)))
+            )
+        except ValueError:
+            self._max_concurrency = max_concurrency
+        try:
+            self._cache_ttl = max(0.0, float(os.getenv("GITHUB_CACHE_TTL", "300")))
+        except ValueError:
+            self._cache_ttl = 300.0
+        try:
+            self._stats_timeout = max(1.0, float(os.getenv("GITHUB_STATS_TIMEOUT", "12")))
+        except ValueError:
+            self._stats_timeout = 12.0
+        self._sem = asyncio.Semaphore(self._max_concurrency)
         self._client: httpx.AsyncClient | None = None
 
     # ------------------------------------------------------------------ ctx
@@ -248,11 +275,23 @@ class GitHubService:
     async def fetch_recent_commits(
         self, repo_url: str, *, limit: int = 15
     ) -> list[CommitInfo]:
-        """Return the `limit` most recent commits, enriched with diff stats."""
+        """Return the `limit` most recent commits, enriched with diff stats.
+
+        Results are cached briefly per `(owner, repo, limit, authenticated)`.
+        The stats fan-out is bounded by `GITHUB_STATS_TIMEOUT`, so a slow
+        GitHub cannot stall the whole saga: commits fall back to message-only
+        data when the deadline expires.
+        """
         if limit <= 0:
             return []
         limit = min(limit, MAX_COMMITS_PER_REQUEST, _GITHUB_PER_PAGE_LIMIT)
         owner, repo = parse_github_url(repo_url)
+
+        cache_key = (owner.lower(), repo.lower(), limit, bool(self._token))
+        now = time.monotonic()
+        cached = _COMMIT_CACHE.get(cache_key)
+        if cached is not None and cached[0] > now:
+            return [commit.model_copy(deep=True) for commit in cached[1]]
 
         resp = await self._get(f"/repos/{owner}/{repo}/commits", per_page=limit)
         payload = resp.json()
@@ -273,20 +312,81 @@ class GitHubService:
                 f"Le depot {owner}/{repo} ne contient aucun commit lisible."
             )
 
-        tasks = [self._build_commit(owner, repo, item) for item in raw_commits]
-        # return_exceptions=False is safe: _build_commit never raises for a single
-        # commit's stats, and a hard failure here should abort the request.
-        return list(await asyncio.gather(*tasks))
+        # Unauthenticated GitHub allows 60 requests/hour and this saga already
+        # costs 1 + N. When only a few calls remain, skip the per-commit stats
+        # rather than burning the quota and failing the whole request. This also
+        # applies to an authenticated token that is close to its own quota.
+        remaining = _int_header(resp, "x-ratelimit-remaining")
+        fetch_stats = remaining is None or remaining > len(raw_commits) + 5
+
+        complete = fetch_stats
+        if fetch_stats:
+            commits, complete = await self._enrich_commits(owner, repo, raw_commits)
+        else:
+            commits = [self._base_commit(owner, repo, item) for item in raw_commits]
+
+        # Only cache a fully enriched list. A stats timeout, a low-quota skip or
+        # a per-commit failure produces zeroed diff stats; caching that for the
+        # full TTL would poison every retry of the same repo long after GitHub
+        # recovered (and the saga prompt consumes those stats).
+        if self._cache_ttl > 0 and complete:
+            _cache_put(cache_key, commits, self._cache_ttl)
+        return [commit.model_copy(deep=True) for commit in commits]
+
+    async def _enrich_commits(
+        self, owner: str, repo: str, raw_commits: list[dict[str, Any]]
+    ) -> tuple[list[CommitInfo], bool]:
+        """Fetch per-commit stats concurrently, within a global deadline.
+
+        Returns the commits and whether every stats call succeeded. On timeout
+        the stats already obtained are kept and only the missing commits fall
+        back to zeroed diff stats.
+        """
+        tasks = [
+            asyncio.create_task(self._build_commit(owner, repo, item))
+            for item in raw_commits
+        ]
+        try:
+            done, pending = await asyncio.wait(tasks, timeout=self._stats_timeout)
+        except BaseException:
+            # `asyncio.wait` never cancels the tasks it watches. Without this
+            # reaping, cancelling this coroutine (shutdown, programmatic
+            # cancellation) would leave the stats tasks running against a
+            # shared httpx client that `__aexit__` is about to close.
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
+        if pending:
+            for task in pending:
+                task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+            logger.warning(
+                "GitHub stats timeout (%.1fs): %d/%d commits without diff stats",
+                self._stats_timeout,
+                len(pending),
+                len(raw_commits),
+            )
+
+        commits: list[CommitInfo] = []
+        complete = not pending
+        for item, task in zip(raw_commits, tasks):
+            if task in done and not task.cancelled() and task.exception() is None:
+                commit, stats_ok = task.result()
+                commits.append(commit)
+                complete = complete and stats_ok
+            else:
+                complete = False
+                commits.append(self._base_commit(owner, repo, item))
+        return commits, complete
 
     async def _build_commit(
         self, owner: str, repo: str, item: dict[str, Any]
-    ) -> CommitInfo:
+    ) -> tuple[CommitInfo, bool]:
         sha = item.get("sha", "")
-        commit_meta = item.get("commit") or {}
-        author_meta = commit_meta.get("author") or {}
-        gh_author = item.get("author") or {}
 
         additions = deletions = files_changed = 0
+        stats_ok = True
         try:
             detail_resp = await self._get(f"/repos/{owner}/{repo}/commits/{sha}")
             detail = detail_resp.json()
@@ -296,7 +396,33 @@ class GitHubService:
             files_changed = len(detail.get("files") or [])
         except GitHubServiceError:
             # Never break the whole saga because one commit's stats failed.
-            pass
+            stats_ok = False
+
+        commit = self._base_commit(
+            owner,
+            repo,
+            item,
+            additions=additions,
+            deletions=deletions,
+            files_changed=files_changed,
+        )
+        return commit, stats_ok
+
+    @staticmethod
+    def _base_commit(
+        owner: str,
+        repo: str,
+        item: dict[str, Any],
+        *,
+        additions: int = 0,
+        deletions: int = 0,
+        files_changed: int = 0,
+    ) -> CommitInfo:
+        """Build a commit from the list payload, without any network call."""
+        sha = item.get("sha", "")
+        commit_meta = item.get("commit") or {}
+        author_meta = commit_meta.get("author") or {}
+        gh_author = item.get("author") or {}
 
         authored_at_raw = author_meta.get("date") or (item.get("committer") or {}).get(
             "date"
@@ -327,11 +453,34 @@ def _rate_limit_hint(status: int) -> str:
     if status in (403, 429):
         return (
             " (quota GitHub epuise : 60 req/h sans token, une saga en consomme ~1+N. "
-            "Renseigne GITHUB_TOKEN dans backend/.env)"
+            "Renseigne GITHUB_TOKEN dans le fichier .env a la racine du projet — "
+            "cree un token sur https://github.com/settings/tokens)"
         )
     if status == 404:
         return " (depot prive, inexistant, ou renomme)"
     return ""
+
+
+def _int_header(resp: httpx.Response, name: str) -> int | None:
+    """Read an integer response header without trusting its shape."""
+    raw = resp.headers.get(name)
+    try:
+        return int(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _cache_put(
+    key: tuple[str, str, int, bool],
+    commits: list[CommitInfo],
+    ttl: float,
+) -> None:
+    # Expiry starts at insertion, not at request start: the fetch itself can
+    # consume up to GITHUB_STATS_TIMEOUT seconds.
+    _COMMIT_CACHE[key] = (time.monotonic() + ttl, commits)
+    # Bound the cache: a judge may try many repositories in one session.
+    while len(_COMMIT_CACHE) > _COMMIT_CACHE_MAX:
+        _COMMIT_CACHE.pop(next(iter(_COMMIT_CACHE)))
 
 
 def _safe_iso_parse(value: str | None) -> datetime:

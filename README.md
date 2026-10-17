@@ -120,7 +120,7 @@ The UI language switches in real time from the HUD, with no page reload — ever
 
 ### Async Concurrency & Pre-fetching
 
-GPU-bound image calls are serialized through `asyncio.Semaphore(1)` in the backend, which protects the single MI300X from request pile-ups and keeps latency predictable under judge load. On top of that, the backend pre-generates the saga's artwork in the background after the JSON response is sent — squad sprites first, then the first page, then the remaining chapters and boss panels — so chapter progression feels instantaneous once the player starts reading.
+GPU-bound image calls are serialized through `asyncio.Semaphore(1)` in the backend, which protects the single MI300X from request pile-ups and keeps latency predictable under judge load. The wait for that slot is bounded (`AMD_IMAGE_QUEUE_TIMEOUT`, returning `503`), and a circuit breaker opens immediately on a connection failure — or after repeated transient failures — so when the FLUX host is down, `/image-proxy` returns `503` with `Retry-After` instead of leaving the manga on `DECODING FLUX…`. On top of that, the backend pre-generates the saga's artwork in the background after the JSON response is sent — squad sprites first, then the first page, then the remaining chapters and boss panels — so chapter progression feels instantaneous once the player starts reading.
 
 ## System Architecture
 
@@ -267,6 +267,15 @@ docker compose up --build
 5. Toggle **FR / EN** in the HUD: the demo saga is refetched in the other language and retells itself from the first chapter. (A saga generated from a repository keeps the language it was generated in — regenerate it to switch.)
 
 Judge tip: `GET /saga/mock` needs no GPU, no GitHub token, and no outbound network beyond the backend itself — it serves the full deterministic saga payload, and every panel degrades to a retro placeholder if FLUX is unreachable. For an entirely API-free preview, open the frontend components' embedded design assets (KAI-42 / VALKYR-X / SHADOW-GIT / ARCH-BYTE, CH.3 — LE KRAKEN DU MERGE, PRODUCTION OUTAGE LV.99).
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Panels stay on `DECODING FLUX…`, then `SIGNAL LOST`; `/image-proxy` returns `503` with `Retry-After` | The FLUX host is unreachable (connection refused or connect timeout) | Check `curl http://<FLUX_BASE_URL host>:8001/` from the machine running the backend, restart the AMD image server, or point `FLUX_BASE_URL` at a live endpoint. The circuit re-probes automatically after `AMD_IMAGE_CIRCUIT_COOLDOWN` seconds. |
+| `POST /saga/generate` fails with GitHub `403` / `429` | Unauthenticated GitHub quota: 60 requests/hour, and one saga costs ~1 + N | Create a token at <https://github.com/settings/tokens>, set `GITHUB_TOKEN=...` in the root `.env`, then run `docker compose up -d --force-recreate backend` (a plain `restart` does not reload env vars). |
+| First generation is slow, repeats are fast | Per-commit stats are an N+1 fan-out and GitHub latency dominates | Repeated repos are cached for `GITHUB_CACHE_TTL` seconds; `GITHUB_STATS_TIMEOUT` bounds the stats fan-out. A token raises the quota, not raw request latency. |
+| Need the raw backend log | Compose prefixes every line | `docker compose logs --tail=200 --no-color backend` (omit `-f` in scripts, or it never returns). |
 
 ## Core API Endpoints
 

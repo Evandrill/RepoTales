@@ -30,15 +30,31 @@ services:
       EVOLUS_WORKSPACE_ID: "${EVOLUS_WORKSPACE_ID:-}"
       EVOLUS_API_KEY: "${EVOLUS_API_KEY:-}"
       AMD_IMAGE_TIMEOUT: "${AMD_IMAGE_TIMEOUT:-120}"
+      # Fail fast when the FLUX host is down: bounded connect + queue waits and
+      # a circuit breaker that trips after repeated upstream failures.
+      AMD_IMAGE_CONNECT_TIMEOUT: "${AMD_IMAGE_CONNECT_TIMEOUT:-4}"
+      AMD_IMAGE_QUEUE_TIMEOUT: "${AMD_IMAGE_QUEUE_TIMEOUT:-30}"
+      AMD_IMAGE_CIRCUIT_THRESHOLD: "${AMD_IMAGE_CIRCUIT_THRESHOLD:-2}"
+      AMD_IMAGE_CIRCUIT_COOLDOWN: "${AMD_IMAGE_CIRCUIT_COOLDOWN:-30}"
       # Optional extras (empty = code default).
       AMD_MODEL_NAME: "${AMD_MODEL_NAME:-}"
       # Public alias, used when AMD_MODEL_NAME is empty.
       VLLM_MODEL: "${VLLM_MODEL:-Qwen/Qwen2.5-14B-Instruct}"
       GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      # Short-lived commit cache + bounded stats fan-out for slow/quota-limited
+      # unauthenticated GitHub API calls.
+      GITHUB_CACHE_TTL: "${GITHUB_CACHE_TTL:-300}"
+      GITHUB_STATS_TIMEOUT: "${GITHUB_STATS_TIMEOUT:-12}"
+      GITHUB_MAX_CONCURRENCY: "${GITHUB_MAX_CONCURRENCY:-8}"
       AMD_IMAGE_STEPS: "${AMD_IMAGE_STEPS:-2}"
       AMD_IMAGE_PREGENERATE: "${AMD_IMAGE_PREGENERATE:-true}"
     ports:
       - "${PORT:-8080}:8080"
+    volumes:
+      # Persist generated FLUX artwork across restarts and rebuilds. The cache
+      # key includes prompt + seed + size + upstream fingerprint, so a stale
+      # image can never be served for a different generation.
+      - repotales-image-cache:/app/backend/.cache/images
     restart: unless-stopped
 
   frontend:
@@ -55,3 +71,6 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  repotales-image-cache:
