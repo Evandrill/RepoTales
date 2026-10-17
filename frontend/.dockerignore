@@ -1,0 +1,15 @@
+# node_modules and dist are rebuilt inside the image.
+node_modules/
+dist/
+.vite/
+*.log
+
+# Secrets / env overrides
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

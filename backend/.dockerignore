@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets — never bake .env into an image (Compose injects env vars).
+.env
+.env.*
+!.env.example
+
+# Local artifacts
+.cache/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

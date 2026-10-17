@@ -1,0 +1,57 @@
+# RepoTales — reproducible demo stack (AMD Hackathon, Requirement 5).
+#
+#   cp .env.example .env      # optional: real values / keys
+#   docker compose up --build
+#
+#   frontend → http://localhost:5173   (Nginx: static bundle + /api proxy)
+#   backend  → http://localhost:8080   (FastAPI, /docs, /health)
+#
+# No secret is committed: `.env` is gitignored and optional. Every variable
+# falls back to a safe demo default, and the real environment always wins over
+# the file (backend/.env is loaded with override=False).
+name: repotales
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: repotales-backend:latest
+    # `required: false` keeps `docker compose up` working out of the box, while
+    # still loading real values when a root .env exists.
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      # Public, documented names (see .env.example).
+      PORT: "${PORT:-8080}"
+      VLLM_BASE_URL: "${VLLM_BASE_URL:-http://129.212.191.240:8000/v1}"
+      FLUX_BASE_URL: "${FLUX_BASE_URL:-http://129.212.191.240:8001}"
+      EVOLUS_WORKSPACE_ID: "${EVOLUS_WORKSPACE_ID:-}"
+      EVOLUS_API_KEY: "${EVOLUS_API_KEY:-}"
+      AMD_IMAGE_TIMEOUT: "${AMD_IMAGE_TIMEOUT:-120}"
+      # Optional extras (empty = code default).
+      AMD_MODEL_NAME: "${AMD_MODEL_NAME:-}"
+      # Public alias, used when AMD_MODEL_NAME is empty.
+      VLLM_MODEL: "${VLLM_MODEL:-Qwen/Qwen2.5-14B-Instruct}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      AMD_IMAGE_STEPS: "${AMD_IMAGE_STEPS:-2}"
+      AMD_IMAGE_PREGENERATE: "${AMD_IMAGE_PREGENERATE:-true}"
+    ports:
+      - "${PORT:-8080}:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Build-time constant baked into the bundle; Nginx proxies /api.
+        VITE_API_BASE: /api
+    image: repotales-frontend:latest
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

@@ -1,0 +1,367 @@
+/**
+ * REPO TALES — i18n dictionary (EN / FR)
+ *
+ * Flat dotted keys keep lookups O(1) and make a missing translation obvious.
+ * Saga *content* (chapter titles, bubbles, boss names) is not translated here:
+ * the backend generates it in the requested language (`language: "fr"|"en"`).
+ * Only chrome, labels, buttons, system messages and combat narration live in
+ * this file.
+ */
+
+export const LANGUAGES = ['en', 'fr']
+export const DEFAULT_LANGUAGE = 'en'
+
+export const translations = {
+  en: {
+    /* ── shared / HUD ─────────────────────────────────────────────────── */
+    'common.on': 'ON',
+    'common.off': 'OFF',
+    'common.exp': 'EXP',
+    'common.page': 'PAGE',
+    'hud.aria': 'Main HUD',
+    'hud.newSaga': 'Start a new saga',
+    'hud.logoAlt': 'RepoTales logo',
+    'hud.profileAlt': 'Player profile',
+    'hud.version': 'VER 1.0.4 [16-BIT SAGA CORE]',
+    'hud.daemon': 'GIT DAEMON:',
+    'hud.online': 'ONLINE',
+    'hud.down': 'DOWN',
+    'hud.rank': 'CODE SLAYER',
+    'hud.bgmOnTitle': 'Mute the 8-bit music',
+    'hud.bgmOffTitle': 'Enable the 8-bit music',
+    'hud.bgmAriaOn': 'Chiptune music enabled',
+    'hud.bgmAriaOff': 'Chiptune music muted',
+    'hud.langAria': 'Switch interface language',
+    'hud.langTitle': 'Switch language (EN / FR)',
+    'status.insert': 'INSERT REPO TO PLAY | PRESS [SPACE] TO SUMMON COMMIT',
+    'status.branch': 'BRANCH:',
+    'status.commit': 'COMMIT',
+    'status.engine': '16-BIT ENGINE LOADED',
+
+    /* ── navigation ───────────────────────────────────────────────────── */
+    'nav.roster': 'PARTY ROSTER',
+    'nav.questLog': 'QUEST LOG',
+    'nav.bossRaids': 'BOSS RAIDS',
+    'nav.newSaga': 'NEW SAGA',
+
+    /* ── landing ──────────────────────────────────────────────────────── */
+    'landing.tagline': '► YOUR GIT HISTORY BECOMES A LEGEND ◄',
+    'landing.insertRepository': 'INSERT REPOSITORY',
+    'landing.mode': '[MODE: 16-BIT MANGA]',
+    'landing.inputAria': 'GitHub repository URL',
+    'landing.placeholder': '> PASTE GITHUB URL',
+    'landing.invalid': 'ERR 400 — INVALID GITHUB URL',
+    'landing.examples': 'EXAMPLES:',
+    'landing.busy': 'SUMMONING… ▸ PLEASE WAIT',
+    'landing.submit': 'INSERT COIN ▸ START SAGA',
+    'landing.demo': '[OFFLINE DEMO] LOAD SAMPLE SAGA',
+    'landing.credits': 'CREDITS: ∞ FREE',
+    'landing.difficulty': 'DIFFICULTY: SHONEN BOSS',
+    'landing.pressEsc': '[PRESS ESC FOR MENU]',
+    'landing.audio': 'AUDIO: 16-BIT CHIPTUNE',
+    'landing.systemReady': 'SYSTEM READY — 3 SAGAS GENERATED TODAY',
+    'landing.topSaga': '★ TOP SAGA: OCTO-CRAT — 999,999 XP ★',
+
+    /* ── images / proxy FLUX ──────────────────────────────────────────── */
+    'image.retry': 'RETRY {n}/{max}…',
+    'image.signalLost': 'SIGNAL LOST',
+
+    /* ── app errors ───────────────────────────────────────────────────── */
+    'app.unexpected': 'Unexpected error.',
+    'app.httpError': 'HTTP error {status} — the API returned no readable response.',
+    'app.offline':
+      'API unreachable. Is the backend running on http://127.0.0.1:8080 ?',
+
+    /* ── guild roster ─────────────────────────────────────────────────── */
+    'roster.manifest': '■ SYNDICATE MANIFEST // SLOT 04 READY',
+    'roster.title': '◆ GUILD ROSTER ◆',
+    'roster.team': 'TEAM {name} — {count} HEROES SUMMONED TO BATTLE REPO',
+    'roster.ready': 'READY STATE: 100%',
+    'roster.avgStreak': 'AVG STREAK: {days} DAYS',
+    'roster.totalCommits': 'TOTAL COMMITS: {count}',
+    'roster.guildXp': 'GUILD XP',
+    'roster.inspect': '[INSPECT METRICS]',
+    'roster.export': '[EXPORT CARDS]',
+    'roster.exporting': 'RENDERING CARDS…',
+    'roster.exported': '✓ CARDS SAVED',
+    'roster.exportFailed': '✗ EXPORT FAILED',
+    'roster.nextTier': 'NEXT TIER:',
+    'roster.xpUnit': 'XP',
+    'roster.heroesAlt': 'Guild hero portrait',
+    'roster.level': 'LV.',
+    'roster.streakDays': 'DAYS',
+    'roster.subSlot': 'CORE',
+
+    /* ── hero card ────────────────────────────────────────────────────── */
+    'hero.portraitAlt': 'Portrait of {name}',
+    'hero.summoning': 'SUMMONING HERO…',
+    'hero.spriteFallback': 'SPRITE_96X96 — {name}.RAW',
+    'hero.commits': 'COMMITS:',
+    'hero.prs': 'PR MERGED:',
+    'hero.streak': 'STREAK:',
+    'stats.hp': 'HP',
+    'stats.atk': 'ATK',
+    'stats.def': 'DEF',
+
+    /* ── manga reader ─────────────────────────────────────────────────── */
+    'reader.prevPage': 'Previous page',
+    'reader.nextPage': 'Next page',
+    'reader.progress': 'Reading progress',
+    'reader.raw': 'RAW // DUMP',
+    'reader.protocol': 'ARCADE SHONEN PROTOCOL',
+    'reader.volume': 'VOL. 01 // ARCHIVE #404',
+    'reader.footer': 'REPO TALES SAGA // ISSUE {issue} // SHONEN JUMP COMPILER',
+    'reader.panelAlt': 'Manga panel',
+    'reader.panelAltCaption': 'Illustration: {caption}',
+    'reader.inking': 'INKING PANEL…',
+    'reader.noSignal': 'PLANCHE 128X128 — NO SIGNAL',
+    'reader.navMatrix': 'NAV MATRIX',
+    'reader.dpadReady': 'DPAD // READY',
+    'reader.select': 'SELECT',
+    'reader.start': '■ START',
+    'reader.prev': '■ B [PREV]',
+    'reader.next': '■ A [NEXT]',
+    'reader.finalBoss': '!! BOSS',
+    'reader.finalChapter': 'FINAL CHAPTER',
+
+    /* ── boss fight ───────────────────────────────────────────────────── */
+    'boss.dialogAria': 'Boss fight: {name}',
+    'boss.sysAlert': 'SYS::ALERT',
+    'boss.sysClear': 'SYS::QUEST_CLEAR',
+    'boss.warning': '!! WARNING — BOSS EVENT !!',
+    'boss.err': 'ERR#500',
+    'boss.spriteAlt': 'Sprite of {name}',
+    'boss.spriteFallback': 'BOSS SPRITE — NO SIGNAL',
+    'boss.awakening': 'AWAKENING…',
+    'boss.sig': 'SIG',
+    'boss.daemon': '⟨DAEMON⟩ {level} ⟨/DAEMON⟩',
+    'boss.hp': 'BOSS HP — {hp} / {max}',
+    'boss.threat': 'THREAT: {threat}',
+    'boss.status': 'STATUS:',
+    'boss.remaining': '{pct}% REMAINING',
+    'boss.ap': 'AP {ap}',
+    'boss.damageChip': 'DMG {dmg}',
+    'boss.crit': '+CRIT!',
+    'boss.choose': 'CHOOSE YOUR MOVE, DEVELOPER',
+    'boss.logTitle': 'COMBAT LOG',
+    'boss.logEmpty': '▸ Awaiting your command…',
+    'boss.round': 'ROUND {n}',
+    'boss.attackLine': '{hero} uses {move}! -{dmg} HP to the Boss!',
+    'boss.criticalLine': 'CRITICAL! {hero} unleashes {move} — -{dmg} HP!',
+    'boss.victory': 'VICTORY',
+    'boss.questComplete': 'QUEST COMPLETED',
+    'boss.victoryText':
+      'The {boss} is purged from the timeline. {hero} earns the Merge Crown.',
+    'boss.reward': 'REWARD: {xp} XP',
+    'boss.rounds': 'ROUNDS: {count}',
+    'boss.damageDealt': 'DAMAGE: {count}',
+    'boss.xpGained': '+{xp} EXP GAINED',
+    'boss.eradicated': '{boss} HAS BEEN ERADICATED!',
+    'boss.viewSaga': '[ VIEW SAGA ]',
+    'boss.replayCombat': '[ REPLAY COMBAT ]',
+    'boss.newSaga': '[ NEW SAGA ]',
+    'boss.replay': '[REPLAY FIGHT]',
+    'boss.share': '[SHARE SAGA]',
+    'boss.close': '[CLOSE]',
+    'boss.shareCopied': 'LINK COPIED!',
+    'boss.shareShared': 'SAGA SHARED!',
+    'boss.shareFailed': 'SHARE UNAVAILABLE',
+    'threat.CATACLYSMIC': 'CATACLYSMIC',
+    'threat.SEVERE': 'SEVERE',
+    'threat.MODERATE': 'MODERATE',
+
+    /* ── exported team sheet (canvas) ─────────────────────────────────── */
+    'export.title': 'REPO TALES',
+    'export.subtitle': 'GUILD ROSTER — {guild}',
+    'export.badge': '16-BIT SAGA CORE // TEAM SHEET',
+    'export.level': 'LV.',
+    'export.commits': 'COMMITS',
+    'export.prs': 'PR MERGED',
+    'export.streak': 'STREAK',
+    'export.footer': 'REPO TALES // 16-BIT SAGA CORE // {date}',
+    'export.dateLocale': 'en-US',
+  },
+
+  fr: {
+    /* ── shared / HUD ─────────────────────────────────────────────────── */
+    'common.on': 'ON',
+    'common.off': 'OFF',
+    'common.exp': 'EXP',
+    'common.page': 'PAGE',
+    'hud.aria': 'HUD principal',
+    'hud.newSaga': 'Lancer une nouvelle saga',
+    'hud.logoAlt': 'Logo RepoTales',
+    'hud.profileAlt': 'Profil du joueur',
+    'hud.version': 'VER 1.0.4 [MOTEUR SAGA 16-BIT]',
+    'hud.daemon': 'DAEMON GIT :',
+    'hud.online': 'EN LIGNE',
+    'hud.down': 'HORS LIGNE',
+    'hud.rank': 'TRANCHEUR DE CODE',
+    'hud.bgmOnTitle': 'Couper la musique 8-bit',
+    'hud.bgmOffTitle': 'Activer la musique 8-bit',
+    'hud.bgmAriaOn': 'Musique chiptune activée',
+    'hud.bgmAriaOff': 'Musique chiptune coupée',
+    'hud.langAria': 'Changer la langue de l’interface',
+    'hud.langTitle': 'Changer de langue (FR / EN)',
+    'status.insert': 'INSÉREZ UN REPO POUR JOUER | [ESPACE] INVOQUE UN COMMIT',
+    'status.branch': 'BRANCHE :',
+    'status.commit': 'COMMIT',
+    'status.engine': 'MOTEUR 16-BIT CHARGÉ',
+
+    /* ── navigation ───────────────────────────────────────────────────── */
+    'nav.roster': 'ÉQUIPE HÉROS',
+    'nav.questLog': 'JOURNAL QUÊTES',
+    'nav.bossRaids': 'RAIDS BOSS',
+    'nav.newSaga': 'NOUVELLE SAGA',
+
+    /* ── landing ──────────────────────────────────────────────────────── */
+    'landing.tagline': '► TON HISTORIQUE GIT DEVIENT UNE LÉGENDE ◄',
+    'landing.insertRepository': 'INSÉRER UN DÉPÔT',
+    'landing.mode': '[MODE : MANGA 16-BIT]',
+    'landing.inputAria': 'URL du dépôt GitHub',
+    'landing.placeholder': '> COLLEZ L’URL GITHUB',
+    'landing.invalid': 'ERR 400 — URL GITHUB INVALIDE',
+    'landing.examples': 'EXEMPLES :',
+    'landing.busy': 'INVOCATION… ▸ PATIENTEZ',
+    'landing.submit': 'INSÉRER UNE PIÈCE ▸ LANCER LA SAGA',
+    'landing.demo': '[DÉMO HORS-LIGNE] CHARGER LA SAGA EXEMPLE',
+    'landing.credits': 'CRÉDITS : ∞ GRATUITS',
+    'landing.difficulty': 'DIFFICULTÉ : BOSS SHONEN',
+    'landing.pressEsc': '[ESC POUR LE MENU]',
+    'landing.audio': 'AUDIO : CHIPTUNE 16-BIT',
+    'landing.systemReady': 'SYSTÈME PRÊT — 3 SAGAS GÉNÉRÉES AUJOURD’HUI',
+    'landing.topSaga': '★ MEILLEURE SAGA : OCTO-CRAT — 999 999 XP ★',
+
+    /* ── images / proxy FLUX ──────────────────────────────────────────── */
+    'image.retry': 'NOUVELLE TENTATIVE {n}/{max}…',
+    'image.signalLost': 'SIGNAL PERDU',
+
+    /* ── app errors ───────────────────────────────────────────────────── */
+    'app.unexpected': 'Erreur inattendue.',
+    'app.httpError': 'Erreur HTTP {status} — l’API n’a pas renvoyé de réponse lisible.',
+    'app.offline':
+      'API injoignable. Le backend tourne-t-il sur http://127.0.0.1:8080 ?',
+
+    /* ── guild roster ─────────────────────────────────────────────────── */
+    'roster.manifest': '■ MANIFESTE DU SYNDICAT // SLOT 04 PRÊT',
+    'roster.title': '◆ ROSTER DE GUILDE ◆',
+    'roster.team': 'ÉQUIPE {name} — {count} HÉROS INVOQUÉS POUR LE REPO',
+    'roster.ready': 'ÉTAT : PRÊT À 100 %',
+    'roster.avgStreak': 'SÉRIE MOY. : {days} JOURS',
+    'roster.totalCommits': 'COMMITS TOTAUX : {count}',
+    'roster.guildXp': 'XP DE GUILDE',
+    'roster.inspect': '[INSPECTER LES STATS]',
+    'roster.export': '[EXPORTER LES CARTES]',
+    'roster.exporting': 'RENDU DES CARTES…',
+    'roster.exported': '✓ CARTES ENREGISTRÉES',
+    'roster.exportFailed': '✗ ÉCHEC DE L’EXPORT',
+    'roster.nextTier': 'PROCHAIN PALIER :',
+    'roster.xpUnit': 'XP',
+    'roster.heroesAlt': 'Portrait de héros de guilde',
+    'roster.level': 'NIV.',
+    'roster.streakDays': 'JOURS',
+    'roster.subSlot': 'CORE',
+
+    /* ── hero card ────────────────────────────────────────────────────── */
+    'hero.portraitAlt': 'Portrait de {name}',
+    'hero.summoning': 'INVOCATION DU HÉROS…',
+    'hero.spriteFallback': 'SPRITE_96X96 — {name}.RAW',
+    'hero.commits': 'COMMITS :',
+    'hero.prs': 'PR FUSIONNÉES :',
+    'hero.streak': 'SÉRIE :',
+    'stats.hp': 'PV',
+    'stats.atk': 'ATQ',
+    'stats.def': 'DÉF',
+
+    /* ── manga reader ─────────────────────────────────────────────────── */
+    'reader.prevPage': 'Page précédente',
+    'reader.nextPage': 'Page suivante',
+    'reader.progress': 'Progression de lecture',
+    'reader.raw': 'RAW // DUMP',
+    'reader.protocol': 'PROTOCOLE SHONEN ARCADE',
+    'reader.volume': 'VOL. 01 // ARCHIVE #404',
+    'reader.footer': 'REPO TALES SAGA // NUMÉRO {issue} // COMPILATEUR SHONEN JUMP',
+    'reader.panelAlt': 'Case de manga',
+    'reader.panelAltCaption': 'Illustration : {caption}',
+    'reader.inking': 'ENCRAGE DE LA CASE…',
+    'reader.noSignal': 'PLANCHE 128X128 — PAS DE SIGNAL',
+    'reader.navMatrix': 'MATRICE NAV',
+    'reader.dpadReady': 'DPAD // PRÊT',
+    'reader.select': 'SÉLECTION',
+    'reader.start': '■ DÉPART',
+    'reader.prev': '■ B [PRÉC]',
+    'reader.next': '■ A [SUIV]',
+    'reader.finalBoss': '!! BOSS',
+    'reader.finalChapter': 'DERNIER CHAPITRE',
+
+    /* ── boss fight ───────────────────────────────────────────────────── */
+    'boss.dialogAria': 'Combat de boss : {name}',
+    'boss.sysAlert': 'SYS::ALERTE',
+    'boss.sysClear': 'SYS::QUETE_OK',
+    'boss.warning': '!! ALERTE — ÉVÉNEMENT BOSS !!',
+    'boss.err': 'ERR#500',
+    'boss.spriteAlt': 'Sprite de {name}',
+    'boss.spriteFallback': 'SPRITE BOSS — PAS DE SIGNAL',
+    'boss.awakening': 'ÉVEIL…',
+    'boss.sig': 'SIG',
+    'boss.daemon': '⟨DAEMON⟩ {level} ⟨/DAEMON⟩',
+    'boss.hp': 'PV DU BOSS — {hp} / {max}',
+    'boss.threat': 'MENACE : {threat}',
+    'boss.status': 'STATUT :',
+    'boss.remaining': '{pct} % RESTANTS',
+    'boss.ap': 'PA {ap}',
+    'boss.damageChip': 'DGT {dmg}',
+    'boss.crit': '+CRIT !',
+    'boss.choose': 'CHOISIS TON ATTAQUE, DÉVELOPPEUR',
+    'boss.logTitle': 'JOURNAL DE COMBAT',
+    'boss.logEmpty': '▸ En attente de ton ordre…',
+    'boss.round': 'TOUR {n}',
+    'boss.attackLine': '{hero} lance {move} ! -{dmg} PV au Boss !',
+    'boss.criticalLine': 'COUP CRITIQUE ! {hero} déchaîne {move} — -{dmg} PV !',
+    'boss.victory': 'VICTOIRE',
+    'boss.questComplete': 'QUÊTE ACCOMPLIE',
+    'boss.victoryText':
+      'Le {boss} est purgé de la timeline. {hero} obtient la Couronne du Merge.',
+    'boss.reward': 'RÉCOMPENSE : {xp} XP',
+    'boss.rounds': 'TOURS : {count}',
+    'boss.damageDealt': 'DÉGÂTS : {count}',
+    'boss.xpGained': '+{xp} EXP GAGNÉS',
+    'boss.eradicated': '{boss} A ÉTÉ ÉRADIQUÉ !',
+    'boss.viewSaga': '[ LIRE LA SAGA ]',
+    'boss.replayCombat': '[ REJOUER LE COMBAT ]',
+    'boss.newSaga': '[ NOUVELLE SAGA ]',
+    'boss.replay': '[REJOUER LE COMBAT]',
+    'boss.share': '[PARTAGER LA SAGA]',
+    'boss.close': '[FERMER]',
+    'boss.shareCopied': 'LIEN COPIÉ !',
+    'boss.shareShared': 'SAGA PARTAGÉE !',
+    'boss.shareFailed': 'PARTAGE INDISPONIBLE',
+    'threat.CATACLYSMIC': 'CATACLYSMAL',
+    'threat.SEVERE': 'SÉVÈRE',
+    'threat.MODERATE': 'MODÉRÉ',
+
+    /* ── exported team sheet (canvas) ─────────────────────────────────── */
+    'export.title': 'REPO TALES',
+    'export.subtitle': 'ROSTER DE GUILDE — {guild}',
+    'export.badge': 'MOTEUR SAGA 16-BIT // FEUILLE D’ÉQUIPE',
+    'export.level': 'NIV.',
+    'export.commits': 'COMMITS',
+    'export.prs': 'PR FUSIONNÉES',
+    'export.streak': 'SÉRIE',
+    'export.footer': 'REPO TALES // MOTEUR SAGA 16-BIT // {date}',
+    'export.dateLocale': 'fr-FR',
+  },
+}
+
+/**
+ * Resolve a dotted key, falling back to English then to the key itself.
+ * `{name}` placeholders are replaced from `vars`.
+ */
+export function translate(lang, key, vars) {
+  const table = translations[lang] ?? translations[DEFAULT_LANGUAGE]
+  const raw = table?.[key] ?? translations[DEFAULT_LANGUAGE][key] ?? key
+  if (!vars) return raw
+  return raw.replace(/\{(\w+)\}/g, (match, name) =>
+    vars[name] === undefined || vars[name] === null ? match : String(vars[name]),
+  )
+}

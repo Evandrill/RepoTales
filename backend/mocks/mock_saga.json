@@ -1,0 +1,330 @@
+{
+  "title": "RepoTales: The Saga of the Broken Pipeline",
+  "synopsis": "In the sprawling codebase of the FastAPI realm, a lone backend paladin named Aria stands against the creeping entropy of production outages. When a race condition awakens in the deploy pipeline, she must unite with an unlikely cast of contributors to restore order before the Friday release.",
+  "reading_direction": "ltr",
+  "hero": {
+    "character_id": "aria_dev",
+    "name": "Aria Nakamura",
+    "role": "Lead Backend Engineer",
+    "rpg_class": "Backend Paladin",
+    "level": 47,
+    "stats": {
+      "strength": 62,
+      "dexterity": 78,
+      "intelligence": 91,
+      "vitality": 84,
+      "charisma": 55,
+      "debug": 88
+    },
+    "catchphrase": "If it compiles, it ships. If it ships, it breaks. I fix it.",
+    "commits": 42,
+    "prs": 11,
+    "streak": 9,
+    "is_bot": false
+  },
+  "characters": [
+    {
+      "character_id": "aria_dev",
+      "name": "Aria Nakamura",
+      "role": "Lead Backend Engineer",
+      "rpg_class": "Backend Paladin",
+      "level": 47,
+      "commits": 42,
+      "prs": 11,
+      "streak": 9,
+      "is_bot": false
+    },
+    {
+      "character_id": "kenji_ops",
+      "name": "Kenji Watanabe",
+      "role": "DevOps Ranger",
+      "rpg_class": "Deploy Ranger",
+      "level": 39,
+      "commits": 28,
+      "prs": 6,
+      "streak": 4,
+      "is_bot": false
+    },
+    {
+      "character_id": "sora_qa",
+      "name": "Sora Kimura",
+      "role": "QA Sentinel",
+      "rpg_class": "Test Sorceress",
+      "level": 33,
+      "commits": 19,
+      "prs": 8,
+      "streak": 6,
+      "is_bot": false
+    },
+    {
+      "character_id": "narrator",
+      "name": "The Narrator",
+      "role": "Voice of the Repository",
+      "rpg_class": "Chronicler",
+      "level": 99,
+      "commits": 0,
+      "prs": 0,
+      "streak": 0,
+      "is_bot": false
+    }
+  ],
+  "chapters": [
+    {
+      "index": 1,
+      "title": "Chapter 1 — The First Commit",
+      "summary": "Aria opens her terminal at dawn. A single commit lands in main, and the saga begins.",
+      "panels": [
+        {
+          "scene": "A dimly lit office at sunrise. Monitors glow with green terminal output.",
+          "shot": "wide",
+          "pose": "idle",
+          "emotion": "neutral",
+          "bubbles": [
+            {
+              "speaker_id": "narrator",
+              "text": "Every saga starts with a single commit pushed at the edge of dawn.",
+              "emotion": "neutral",
+              "bubble_style": "narration"
+            }
+          ]
+        },
+        {
+          "scene": "Close on Aria's focused face, lit by monitor glow. Her fingers hover over the keyboard.",
+          "shot": "close_up",
+          "pose": "typing_furious",
+          "emotion": "determined",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "This refactor has been stalling for three sprints. Tonight, it dies.",
+              "emotion": "determined",
+              "bubble_style": "speech"
+            }
+          ]
+        },
+        {
+          "scene": "The terminal prints 'commit 4f7a1c9 — feat: introduce async worker pool'.",
+          "shot": "medium",
+          "pose": "victory",
+          "emotion": "joyful",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "There. Merged.",
+              "emotion": "joyful",
+              "bubble_style": "speech"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "title": "Chapter 2 — The Refactor at Midnight",
+      "summary": "Kenji and Sora join the fight as the CI turns red. A marathon refactor begins.",
+      "panels": [
+        {
+          "scene": "Kenji bursts into the room holding a laptop, alarm in his eyes.",
+          "shot": "medium",
+          "pose": "pointing",
+          "emotion": "anxious",
+          "bubbles": [
+            {
+              "speaker_id": "kenji_ops",
+              "text": "The deploy is red. Forty-two failing jobs. We have twenty minutes.",
+              "emotion": "anxious",
+              "bubble_style": "shout"
+            }
+          ]
+        },
+        {
+          "scene": "Extreme close-up on Aria's eye, a single tear of coffee-fueled resolve.",
+          "shot": "extreme_close_up",
+          "pose": "idle",
+          "emotion": "determined",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "Then we fix them all. One PR at a time.",
+              "emotion": "determined",
+              "bubble_style": "thought"
+            }
+          ]
+        },
+        {
+          "scene": "Sora appears at the doorway, tablet in hand, glasses reflecting the CI logs.",
+          "shot": "medium",
+          "pose": "pointing",
+          "emotion": "neutral",
+          "bubbles": [
+            {
+              "speaker_id": "sora_qa",
+              "text": "I found the flaky test. It's been lying to us for weeks.",
+              "emotion": "neutral",
+              "bubble_style": "speech"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "title": "Chapter 3 — The Green Pipeline",
+      "summary": "The team splits the work. Commit by commit, the red wall turns green.",
+      "panels": [
+        {
+          "scene": "A war table covered in sticky notes. Three silhouettes lean over a build graph.",
+          "shot": "wide",
+          "pose": "pointing",
+          "emotion": "determined",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "Kenji takes the deploy. Sora takes the tests. I take the worker pool.",
+              "emotion": "determined",
+              "bubble_style": "speech"
+            }
+          ]
+        },
+        {
+          "scene": "Close-up of a terminal scrolling commit after commit, the counter climbing.",
+          "shot": "close_up",
+          "pose": "typing_furious",
+          "emotion": "determined",
+          "bubbles": [
+            {
+              "speaker_id": "kenji_ops",
+              "text": "Seventeen commits in one night. My keyboard is smoking.",
+              "emotion": "joyful",
+              "bubble_style": "speech"
+            }
+          ]
+        },
+        {
+          "scene": "The CI board flips from red to green, one job at a time, reflected in three pairs of glasses.",
+          "shot": "medium",
+          "pose": "victory",
+          "emotion": "joyful",
+          "bubbles": [
+            {
+              "speaker_id": "sora_qa",
+              "text": "Green. All of it. I don't trust it either.",
+              "emotion": "neutral",
+              "bubble_style": "speech"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "title": "Chapter 4 — The Calm Before",
+      "summary": "The pipeline is green and the team goes home. Something is already wrong in production.",
+      "panels": [
+        {
+          "scene": "An empty office at night. One monitor still glowing, unattended.",
+          "shot": "wide",
+          "pose": "idle",
+          "emotion": "neutral",
+          "bubbles": [
+            {
+              "speaker_id": "narrator",
+              "text": "They shipped at 22:40 and celebrated until midnight. Production did not.",
+              "emotion": "neutral",
+              "bubble_style": "narration"
+            }
+          ]
+        },
+        {
+          "scene": "Close on a phone screen lighting up a dark bedroom. Twelve notifications stacked.",
+          "shot": "close_up",
+          "pose": "shocked",
+          "emotion": "shocked",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "Twelve alerts. At three in the morning.",
+              "emotion": "shocked",
+              "bubble_style": "whisper"
+            }
+          ]
+        },
+        {
+          "scene": "Aria sits up in the dark, laptop already open, face half-lit by the screen.",
+          "shot": "medium",
+          "pose": "typing_furious",
+          "emotion": "determined",
+          "bubbles": [
+            {
+              "speaker_id": "aria_dev",
+              "text": "Wake the others. We're going back in.",
+              "emotion": "determined",
+              "bubble_style": "speech"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "boss_fight": {
+    "name": "The Production Incident of 3:00 AM",
+    "description": "A race condition in the async worker pool triggers a cascade of 500s across the entire API. Every monitor in the war room turns red simultaneously.",
+    "stakes": "If the incident is not resolved before sunrise, the Friday release is cancelled and the team's credibility crumbles.",
+    "phases": [
+      "Phase 1 — The Alert Storm: pager duty explodes as 12 alerts fire in 30 seconds.",
+      "Phase 2 — The Silent Log: Aria isolates the failing coroutine, but the stack trace is empty.",
+      "Phase 3 — The Fix: Kenji rolls back, Sora adds a regression test, Aria merges the hotfix."
+    ],
+    "outcome": "The pipeline turns green at 4:47 AM. The release ships on time. Aria adds a post-mortem to the repo.",
+    "panels": [
+      {
+        "scene": "Wide shot of the war room. Red dashboards everywhere. Three engineers frozen at their desks.",
+        "shot": "wide",
+        "pose": "shocked",
+        "emotion": "shocked",
+        "bubbles": [
+          {
+            "speaker_id": "kenji_ops",
+            "text": "It's everywhere. The API is down.",
+            "emotion": "shocked",
+            "bubble_style": "shout"
+          }
+        ]
+      },
+      {
+        "scene": "Close-up of Aria, head in her hands, eyes burning with focus.",
+        "shot": "close_up",
+        "pose": "head_in_hands",
+        "emotion": "anxious",
+        "bubbles": [
+          {
+            "speaker_id": "aria_dev",
+            "text": "Not tonight. Not on my watch.",
+            "emotion": "determined",
+            "bubble_style": "thought"
+          }
+        ]
+      },
+      {
+        "scene": "The final terminal output: 'deploy succeeded'. Green checkmarks rain down the screen.",
+        "shot": "medium",
+        "pose": "victory",
+        "emotion": "joyful",
+        "bubbles": [
+          {
+            "speaker_id": "aria_dev",
+            "text": "Ship it.",
+            "emotion": "joyful",
+            "bubble_style": "speech"
+          },
+          {
+            "speaker_id": "sora_qa",
+            "text": "Regression test added. Never again.",
+            "emotion": "determined",
+            "bubble_style": "speech"
+          }
+        ]
+      }
+    ]
+  }
+}

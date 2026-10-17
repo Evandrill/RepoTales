@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+.env.local
+*.env
+
+# Node
+node_modules/
+dist/
+
+# Runtime caches / logs
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+.review_*
+
+# Local tooling
+.claude/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

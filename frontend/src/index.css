@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * REPO TALES — base styles
+ * The palette and textures live in tailwind.config.js. This file only holds
+ * what utilities cannot express: the document reset and the CRT cursor.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: #0a0a14; /* void */
+    color: #eaeaf2; /* ink */
+    /* Base font is the data font; display/dialogue are opt-in per component. */
+    font-family: 'JetBrains Mono', monospace;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #ff2a6d;
+    color: #000;
+  }
+
+  /* Pixel scrollbar, so long pages stay on-theme. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2e2e4a #0a0a14;
+  }
+}
