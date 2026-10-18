@@ -37,6 +37,20 @@ The mapping is systematic, not cosmetic: every gameplay element is derived from 
 
 Everything runs on self-hosted open-weights models serving from AMD Instinct MI300X accelerators: no third-party closed AI service touches the pipeline.
 
+## Screens
+
+<img src="docs/screenshots/landing-terminal.png" alt="RepoTales landing terminal — INSERT COIN · START SAGA" width="100%" />
+
+<p align="center"><sub><b>01 · Landing Terminal</b> — paste any GitHub URL, or load the built-in demo saga.</sub></p>
+
+<img src="docs/screenshots/guild-roster.png" alt="RepoTales guild roster — contributors as RPG hero cards" width="100%" />
+
+<p align="center"><sub><b>02 · Guild Roster</b> — contributors become hero cards whose HP / ATK / DEF are derived from commits, PRs and streaks.</sub></p>
+
+<img src="docs/screenshots/manga-reader.png" alt="RepoTales manga reader — CH.3, Le Kraken du Merge" width="100%" />
+
+<p align="center"><sub><b>03 · Manga Reader</b> — commit history becomes a 16-bit manga page, with speech bubbles, SFX lettering and Game Boy-style navigation.</sub></p>
+
 ## Hackathon Compliance Matrix
 
 | # | Requirement | How RepoTales complies | Documented in |
@@ -360,7 +374,8 @@ RepoTales/
 ├── .gitignore / .gitattributes
 ├── docs/
 │   ├── architecture.md           # topology + request lifecycle
-│   └── logo.svg                  # stylized REPOTALES wordmark
+│   ├── logo.svg                  # stylized REPOTALES wordmark
+│   └── screenshots/              # README captures — landing · roster · manga
 ├── backend/
 │   ├── Dockerfile
 │   ├── main.py                   # FastAPI app — /saga · /image-proxy · /health
